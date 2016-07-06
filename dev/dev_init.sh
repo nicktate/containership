@@ -90,7 +90,7 @@ function setupRepo {
             hub fork
 
             if [[ -z "$github_user" ]]; then
-                github_user=grep -o 'user: .*' ~/.config/hub | awk '{print $2}'
+                github_user=$(grep -o 'user: .*' ~/.config/hub | awk '{print $2}')
             fi
 
             git remote rename origin upstream
