@@ -30,6 +30,7 @@ case $script_arg in
         ;;
     all)
         all=true
+        npm_remove_existing=$2
         ;;
     *)
         printf "Please pass either git, npm_install, symlink, or all in as a command.\n\n"
