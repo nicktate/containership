@@ -64,7 +64,6 @@ containership_repos=(
     "containership"
     "containership.analytics"
     "containership.api"
-    "containership.cli"
     "containership.core"
     "containership.scheduler"
     "codexd"
@@ -93,8 +92,16 @@ function setupRepo {
                 github_user=$(grep -o 'user: .*' ~/.config/hub | awk '{print $2}')
             fi
 
-            git remote rename origin upstream
-            git remote rename $github_user origin
+            if git remote -v | grep "upstream" > /dev/null; then
+                git remote remove upstream
+            fi
+
+            if git remote -v | grep "origin" > /dev/null; then
+                git remote remove origin
+            fi
+
+            git remote add origin git@github.com:$github_user/$repo.git
+            git remote add upstream git@github.com:containership/$repo.git
         fi
 
         cd $containership_dir
@@ -124,10 +131,16 @@ if [ "$all" == true ] || [ "$symlink" == true ]; then
             echo "Attempting to symlink all modules inside: $repo..."
 
             for repo in ${containership_repos[@]}; do
-                if [ -d $repo ]; then
+                if [ -d "$repo" ]; then
                     echo "Symlinking $repo -> ../../$repo"
                     rm -rf $repo
                     ln -sF ../../$repo $repo
+                fi
+
+                if [ -d "@containership/$repo" ]; then
+                    echo "Symlinking @containership/$repo -> ../../../$repo"
+                    rm -rf @containership/$repo
+                    ln -sF ../../../$repo @containership/$repo
                 fi
             done
 
