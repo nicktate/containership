@@ -1,40 +1,45 @@
-var child_process = require("child_process");
-var _ = require("lodash");
-var pkg = require([__dirname, "..", "package"].join("/"));
+'use strict';
+
+const child_process = require('child_process');
+const _ = require('lodash');
 
 module.exports = {
 
-    init: function(options){
-        if(process.platform == "win32")
-            var npm = "npm.cmd";
-        else
-            var npm = "npm";
+    fetch: (/*core*/) => {
+        return {
+            commands: [
+                {
+                    name: 'update',
 
-        var url = pkg.repository.update_url;
-        var message = ["Updating Containership to"];
-        var args = ["install", "-g"];
+                    options: {
+                        tag: {
+                            help: 'Specific Containership tag to download',
+                            required: false,
+                            abbr: 't'
+                        }
+                    },
 
-        if(_.has(options, "tag")){
-            args.push(["containership", options.tag].join("@"))
-            message = [message, "version", options.tag].join(" ");
-        }
-        else{
-            args.push("containership");
-            message = [message, "latest version"].join(" ");
-        }
+                    callback: (options) => {
+                        const npm = (process.platform === 'win32') ? 'npm.cmd' : 'npm';
+                        let message = ['Updating Containership to'];
+                        let args = ['install', '-g'];
 
-        console.log(message);
+                        if(_.has(options, 'tag')) {
+                            args.push(`containership@${options.tag}`);
+                            message = `${message} version ${options.tag}`;
+                        } else {
+                            args.push('containership');
+                            message = `${message} latest version`;
+                        }
 
-        child_process.spawn(npm, args, {
-          stdio: "inherit"
-        });
-    },
+                        process.stdout.write(`${message}\n`);
 
-    options: {
-        tag: {
-            help: "Specific Containership tag to download",
-            required: false,
-            abbr: "t"
-        }
+                        child_process.spawn(npm, args, {
+                            stdio: 'inherit'
+                        });
+                    }
+                }
+            ]
+        };
     }
-}
+};
