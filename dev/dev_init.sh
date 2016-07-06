@@ -2,6 +2,10 @@
 
 HUB_CONFIG=~/.config/hub
 
+if [ -f "$HUB_CONFIG" ]; then
+    github_user=$(grep -o 'user: .*' $HUB_CONFIG | awk '{print $2}')
+fi
+
 function yn_prompt {
     local prompt=$1
 
@@ -86,24 +90,24 @@ function setupRepo {
         echo "Forking $repo (if not already forked) and adding remote..."
         cd $repo
 
-        if [[ -z "$github_user" ]] || ! git remote -v | grep "$github_user" > /dev/null; then
-            hub fork
-
-            if [[ -z "$github_user" ]]; then
-                github_user=$(grep -o 'user: .*' ~/.config/hub | awk '{print $2}')
-            fi
-
-            if git remote -v | grep "upstream" > /dev/null; then
-                git remote remove upstream
-            fi
-
-            if git remote -v | grep "origin" > /dev/null; then
-                git remote remove origin
-            fi
-
-            git remote add origin git@github.com:$github_user/$repo.git
-            git remote add upstream git@github.com:containership/$repo.git
+        if git remote -v | grep "origin" > /dev/null; then
+            git remote remove origin
         fi
+
+        if git remote -v | grep "upstream" > /dev/null; then
+            git remote remove upstream
+        fi
+
+        git remote add origin git@github.com:containership/$repo.git
+        hub fork
+
+        # if we don't have their username from the hub config yet
+        if [[ -z "$github_user" ]]; then
+            github_user=$(grep -o 'user: .*' ~/.config/hub | awk '{print $2}')
+        fi
+
+        git remote rename origin upstream
+        git remote rename $github_user origin
 
         cd $containership_dir
     fi
