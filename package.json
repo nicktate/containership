@@ -36,7 +36,7 @@
     "containership.api": "^1.4.2",
     "containership.cli": "^1.1.0",
     "containership.core": "^1.7.1",
-    "containership.scheduler": "^1.5.8",
+    "containership.scheduler": "^1.5.9",
     "flat": "1.5.0",
     "lodash": "^2.4.1",
     "mkdirp": "^0.5.1",
