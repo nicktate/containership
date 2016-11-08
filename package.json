@@ -39,6 +39,7 @@
     "containership.scheduler": "^1.6.7",
     "flat": "1.5.0",
     "lodash": "^2.4.1",
+    "memwatch-next": "^0.3.0",
     "mkdirp": "^0.5.1",
     "nomnom": "^1.8.1",
     "npm": "^2.2.0",
