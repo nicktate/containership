@@ -12,8 +12,6 @@ const async = require('async');
 const mkdirp = require('mkdirp');
 const semver = require('semver');
 
-const PLUGIN_VERSION_CUTOFF = '2.0.0';
-
 module.exports = {
 
     fetch: (/*core*/) => {
@@ -169,18 +167,12 @@ module.exports = {
                                     plugin = split[0];
                                     let specifiedVersion = split.length === 2 ? split[1] : '*';
 
-                                    // validate it conforms to V1 Plugin restriction
-                                    if (specifiedVersion !== '*' && semver.gte(specifiedVersion, PLUGIN_VERSION_CUTOFF)) {
-                                        process.stderr.write(`You cannot specify a version greater than or equal to ${PLUGIN_VERSION_CUTOFF} for V1 Plugins`);
-                                        return process.exit(1);
-                                    }
-
                                     // if authorized plugin, set the source
                                     if(_.has(authorized_plugins, plugin)) {
                                         plugin = authorized_plugins[plugin].source;
                                     }
 
-                                    npm.commands.show([`${plugin}@${specifiedVersion}`, 'version'], { loglevel: 'silent' }, (err, data) => {
+                                    npm.commands.view([`${plugin}@${specifiedVersion}`, 'version', 'containership'], { loglevel: 'silent' }, (err, data) => {
                                         if (err) {
                                             process.stderr.write(`Failed to retrieve plugin versions: ${plugin}\n`);
                                             process.stderr.write(JSON.stringify(err, null, 2));
@@ -189,10 +181,16 @@ module.exports = {
                                         }
 
                                         const latestValidVersion = _.reduce(_.keys(data), (accumulator, version) => {
-                                            if (semver.lt(version, PLUGIN_VERSION_CUTOFF)) {
-                                                if (!accumulator || semver.lt(accumulator, version)) {
-                                                    return version;
-                                                }
+                                            const csInfo = data[version].containership;
+
+                                            // if package json has plugin version support info listed and it
+                                            // is not V1, ignore this version of the npm package
+                                            if (csInfo && csInfo.plugin && csInfo.plugin.version !== 'v1') {
+                                                return accumulator;
+                                            }
+
+                                            if (!accumulator || semver.lt(accumulator, version)) {
+                                                return version;
                                             }
 
                                             return accumulator;
@@ -200,7 +198,7 @@ module.exports = {
 
                                         if (!latestValidVersion) {
                                             process.stderr.write('Unable to find valid plugin version to install in the NPM registry');
-                                            process.stderr.write(`Containership V1 Plugins must have npm versions less than ${PLUGIN_VERSION_CUTOFF} and exist in the NPM registry\n`);
+                                            process.stderr.write('Containership V1 Plugins may not have containership.plugin.version === v2 in the package.json config');
                                             process.stderr.write(`Found plugin versions: ${JSON.stringify(_.keys(data))}`);
 
                                             return process.exit(1);
@@ -305,29 +303,29 @@ module.exports = {
                                 options.plugin = split[0];
                                 options.version = split.length === 2 ? split[1] : '*';
 
-                                // validate it conforms to V1 Plugin restriction
-                                if (options.version !== '*' && semver.gte(options.version, PLUGIN_VERSION_CUTOFF)) {
-                                    process.stderr.write(`You cannot specify a version greater than or equal to ${PLUGIN_VERSION_CUTOFF} for V1 Plugins`);
-                                    return process.exit(1);
-                                }
-
                                 if(_.has(authorized_plugins, options.plugin)) {
                                     options.plugin = authorized_plugins[options.plugin].source;
                                 }
 
-                                npm.commands.show([`${options.plugin}@${options.version}`, 'version'], { loglevel: 'silent' }, (err, data) => {
+                                npm.commands.view([`${options.plugin}@${options.version}`, 'version', 'containership'], { loglevel: 'silent' }, (err, data) => {
                                     if (err) {
-                                        process.stderr.write(`Failed to retrieve plugin versions: ${options.plugin}`);
+                                        process.stderr.write(`Failed to retrieve plugin versions: ${options.plugin}\n`);
                                         process.stderr.write(JSON.stringify(err, null, 2));
 
                                         return process.exit(1);
                                     }
 
                                     const latestValidVersion = _.reduce(_.keys(data), (accumulator, version) => {
-                                        if (semver.lt(version, PLUGIN_VERSION_CUTOFF)) {
-                                            if (!accumulator || semver.lt(accumulator, version)) {
-                                                return version;
-                                            }
+                                        const csInfo = data[version].containership;
+
+                                        // if package json has plugin version support info listed and it
+                                        // is not V1, ignore this version of the npm package
+                                        if (csInfo && csInfo.plugin && csInfo.plugin.version !== 'v1') {
+                                            return accumulator;
+                                        }
+
+                                        if (!accumulator || semver.lt(accumulator, version)) {
+                                            return version;
                                         }
 
                                         return accumulator;
@@ -335,7 +333,7 @@ module.exports = {
 
                                     if (!latestValidVersion) {
                                         process.stderr.write('Unable to find valid plugin version to install in the NPM registry');
-                                        process.stderr.write(`Containership V1 Plugins must have npm versions less than ${PLUGIN_VERSION_CUTOFF} and exist in the NPM registry\n`);
+                                        process.stderr.write('Containership V1 Plugins may not have containership.plugin.version == v2 in the package.json config');
                                         process.stderr.write(`Found plugin versions: ${JSON.stringify(_.keys(data))}`);
 
                                         return process.exit(1);
